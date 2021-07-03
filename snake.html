@@ -187,7 +187,9 @@
 
         function gameOver() {
             isGameOver = true;
+        }
 
+        function drawGameOverLay() {
             // make overlay
             ctx.fillStyle = 'rgba(221,221,221,.8)';
             ctx.fillRect(0, 0, cwidth, cheight);
@@ -205,14 +207,15 @@
             ctx.font = `bold ${textHeight}px Arial`;
             ctx.textAlign = 'center';
             ctx.fillText(`Score: ${foodCount}`, cwidth/2, (cheight + textHeight + 200) / 2); 
-
         }
 
         function update() {
             dirChanged = false;
             moveSnake();
             draw();
-            if (!isGameOver) {
+            if(isGameOver) {
+                drawGameOverLay();
+            } else {
                 window.setTimeout(update, 1000 / gameSpeed);
             }
         }
