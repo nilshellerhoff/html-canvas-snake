@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+    </head>
+    <body>
+        <canvas id=canvas width="800" height="800" style="margin: auto; display:block; background-color: #444;">
+        </canvas>
+    </body>
+    <script>
+        var canvas = document.querySelector("#canvas");
+        var ctx = canvas.getContext('2d');
+
+        var cwidth = Number(canvas.offsetWidth);
+        var cheight = Number(canvas.offsetHeight);
+
+        var xpix = 20;
+        var ypix = 20;
+
+        var xpsize = cwidth / xpix;
+        var ypsize = cheight / ypix;
+
+        // snake starting position
+        var snake = [[10,10], [11,10], [12,10], [13,10]]
+
+        // the field we need to redraw (if any)
+        var clearFields = [];
+
+        // direction of snake
+        var snakeDir = [1,0];
+
+        // game speed (1 = 1sec)
+        var gameSpeed = 5;
+
+        var snakeLen = 4;
+
+        isGameOver = false;
+
+        borders = [];
+        borders = borders.concat([...Array(20).keys()].map(x => [0,x]));
+        borders = borders.concat([...Array(20).keys()].map(x => [19,x]));
+        borders = borders.concat([...Array(20).keys()].map(x => [x,0]));
+        borders = borders.concat([...Array(20).keys()].map(x => [x,19]));
+
+        dirChanged = false;
+
+        foodPosition = [0,0];
+        placeFood();
+        foodCount = 0;
+
+        function arrIncludes(arr, ent) {
+            if (arr.some(e => arrCompare(e, ent))) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        function arrCompare(arr1, arr2) {
+            for (i=0; i<arr1.length; i++) {
+                if (arr1[i] != arr2[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function drawSquare(posx, posy, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(xpsize*posx, ypsize*posy, xpsize, ypsize);
+        }
+
+        function drawCounter() {
+            ctx.fillStyle = '#ddd';
+            ctx.font = '20px Arial';
+            ctx.fillText(foodCount, 8, 24);
+        }
+
+        function drawCheckerBoard() {
+            ctx.fillStyle = '#666';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            for (i=0; i<xpix; i++) {
+                ctx.fillRect(i*xpsize, 0, 2, cheight);
+                ctx.fillText(i, (i+.5)*xpsize, 24);
+            }
+            for (i=0; i<ypix; i++) {
+                ctx.fillRect(0, i*ypsize, cwidth, 2);
+                ctx.fillText(i, 20, (i+.5)*ypsize+8);
+            }
+        }
+
+        function draw() {
+            // draw snake
+            snake.forEach(square => {
+                drawSquare(square[0], square[1], '#ddd');
+            });
+            // draw borders
+            borders.forEach(square => {
+                drawSquare(square[0], square[1], '#ddd');
+            })
+            // redraw now empty fieldy
+            clearFields.forEach(square => {
+                drawSquare(square[0], square[1], '#444');
+            });
+            clearFields = [];
+
+            drawCounter();
+            drawCheckerBoard();
+        }
+
+        function moveSnake() {
+            // remove last snake element
+            if (snake.length > snakeLen) {
+                clearFields.push(snake[0])
+                snake.shift();
+            }
+
+            // new snake head
+            let head = snake[snake.length -1];
+            var newx = (head[0] + snakeDir[0] + xpix) % xpix;
+            var newy = (head[1] + snakeDir[1] + ypix) % ypix;
+
+            // check for collision
+            if (checkCollision(newx, newy)) {
+                gameOver();
+            }
+
+            if (arrCompare(head, foodPosition)) {
+                placeFood();
+                foodCount++;
+                snakeLen++;
+            }
+
+            snake.push([newx, newy]);
+        }
+
+        function placeFood() {
+            let x = Math.floor(Math.random() * xpix);
+            let y = Math.floor(Math.random() * ypix);
+            foodPosition = [x,y];
+            if (arrIncludes(snake, foodPosition) || arrIncludes(borders, foodPosition)) {
+                placeFood();
+            } else {
+                drawSquare(x, y, '#9cadab');
+            }
+        }
+
+        function checkCollision(newx, newy) {
+            snakeColl = snake.some(e => e[0] === newx && e[1] === newy);
+            borderColl = borders.some(e => e[0] === newx && e[1] === newy);
+
+            if (!snakeColl && !borderColl) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        function changeDir(event) {
+            // read keycode and change direction accordingly
+            switch (event.keyCode) {
+                    case 37:
+                        snakeDir = arrCompare(snakeDir, [1, 0]) ? [1, 0] : [-1, 0];
+                        break;
+                    case 38:
+                        snakeDir = arrCompare(snakeDir, [0, 1]) ? [0, 1] : [0, -1];
+                        break;
+                    case 39:
+                        snakeDir = arrCompare(snakeDir, [-1, 0]) ? [-1, 0] : [1, 0];
+                        break;
+                    case 40:
+                        snakeDir = arrCompare(snakeDir, [0, -1]) ? [0, -1] : [0, 1];
+                        break;
+                    case 83: // s key
+                        isGameOver = true;
+                        break;
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+
+            // make overlay
+            ctx.fillStyle = 'rgba(221,221,221,.8)';
+            ctx.fillRect(0, 0, cwidth, cheight);
+
+            // game over text
+            ctx.fillStyle = '#444';
+            let textHeight = 100;
+            ctx.font = `bold ${textHeight}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText("Game over!", cwidth/2, (cheight + textHeight) / 2); 
+
+            // score text
+            ctx.fillStyle = '#444';
+            textHeight = 50;
+            ctx.font = `bold ${textHeight}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`Score: ${foodCount}`, cwidth/2, (cheight + textHeight + 200) / 2); 
+
+        }
+
+        function update() {
+            dirChanged = false;
+            moveSnake();
+            draw();
+            if (!isGameOver) {
+                window.setTimeout(update, 1000 / gameSpeed);
+            }
+        }
+
+        update();
+        window.addEventListener("keydown", changeDir);
+    </script>
+
+</html>
