@@ -37,6 +37,7 @@
         isGameOver = false;
 
         borders = [];
+        // borders on the margin (comment to disable borders)
         borders = borders.concat([...Array(20).keys()].map(x => [0,x]));
         borders = borders.concat([...Array(20).keys()].map(x => [19,x]));
         borders = borders.concat([...Array(20).keys()].map(x => [x,0]));
@@ -49,6 +50,7 @@
         foodCount = 0;
 
         function arrIncludes(arr, ent) {
+            // check if ent is an element of arr
             if (arr.some(e => arrCompare(e, ent))) {
                 return true;
             } else {
@@ -57,6 +59,7 @@
         }
 
         function arrCompare(arr1, arr2) {
+            // check if arr1 and arr2 are identical in all entries
             for (i=0; i<arr1.length; i++) {
                 if (arr1[i] != arr2[i]) {
                     return false;
@@ -112,6 +115,7 @@
         function moveSnake() {
             // remove last snake element
             if (snake.length > snakeLen) {
+                // add previously "snake" fields to clearFields array, so they are redrawn next update
                 clearFields.push(snake[0])
                 snake.shift();
             }
@@ -126,12 +130,14 @@
                 gameOver();
             }
 
+            // check if food is eaten
             if (arrCompare(head, foodPosition)) {
                 placeFood();
                 foodCount++;
                 snakeLen++;
             }
 
+            // add new head
             snake.push([newx, newy]);
         }
 
@@ -139,6 +145,7 @@
             let x = Math.floor(Math.random() * xpix);
             let y = Math.floor(Math.random() * ypix);
             foodPosition = [x,y];
+            // if foodPosition is on snake or border redo random location choice
             if (arrIncludes(snake, foodPosition) || arrIncludes(borders, foodPosition)) {
                 placeFood();
             } else {
@@ -160,19 +167,19 @@
         function changeDir(event) {
             // read keycode and change direction accordingly
             switch (event.keyCode) {
-                    case 37:
+                    case 37: // left
                         snakeDir = arrCompare(snakeDir, [1, 0]) ? [1, 0] : [-1, 0];
                         break;
-                    case 38:
+                    case 38: // up
                         snakeDir = arrCompare(snakeDir, [0, 1]) ? [0, 1] : [0, -1];
                         break;
-                    case 39:
+                    case 39: // right
                         snakeDir = arrCompare(snakeDir, [-1, 0]) ? [-1, 0] : [1, 0];
                         break;
-                    case 40:
+                    case 40: // down
                         snakeDir = arrCompare(snakeDir, [0, -1]) ? [0, -1] : [0, 1];
                         break;
-                    case 83: // s key
+                    case 83: // s key to stop game (for debugging of runtime vars)
                         isGameOver = true;
                         break;
             }
